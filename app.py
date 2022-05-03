@@ -1,13 +1,22 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from os import path
+from flask_mail import Mail, Message
+from os import environ
 from dataclasses import dataclass
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = environ.get("DATABASE_URL").replace("postgres","postgresql")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'kgkltd.tk@gmail.com'
+app.config['MAIL_PASSWORD'] = environ.get("MAIL_PASSWORD")
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 
+
+mail = Mail(app)
 db = SQLAlchemy(app)
 
 @dataclass
@@ -22,9 +31,6 @@ class ContactResponses(db.Model):
     email = db.Column(db.String(200))
     message = db.Column(db.String(1000))
 
-if not path.exists("database.db"):
-    db.create_all()
-
 @app.route("/contact",methods=["GET","POST"])
 def contact():
     if request.method=="POST":
@@ -32,6 +38,13 @@ def contact():
         form_email = request.form.get("email")
         form_message = request.form.get("message")
         form_data = ContactResponses(name=form_name,email=form_email,message=form_message)
+        alert_email = Message(
+            subject = "New form response from Portfolio",
+            sender = ("Ganesh Kalyan Kommisetti", "kgkltd.tk@gmail.com"),
+            recipients = ["srikgk333@gmail.com"],
+            body = f"Name: {form_name}\nEmail: {form_email}\nMessage: {form_message}\n"
+        )
+        mail.send(alert_email)
         db.session.add(form_data)
         db.session.commit()
         status = "success"
@@ -47,7 +60,7 @@ def contact():
 
 @app.route("/contact_responses",methods=["GET"])
 def contact_responses():
-    if request.args.get("code") == "Kingu8976":
+    if request.args.get("code") == environ.get("AUTH_PWD"):
         responses = ContactResponses.query.all()
     else:
         return {
