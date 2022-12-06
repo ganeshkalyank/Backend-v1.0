@@ -132,3 +132,6 @@ dmypy.json
 
 # Local database
 database.db
+
+# Headless Output
+nohup.out
