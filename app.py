@@ -51,7 +51,7 @@ def contact():
             subject = "New form response from Portfolio",
             sender = ("Ganesh Kalyan Kommisetti", "kgkltd.tk@gmail.com"),
             recipients = ["srikgk333@gmail.com"],
-            body = f"Name: {form_name}\nEmail: {form_email}\nMessage: {form_message}\n"
+            body = f"Name: {form_name}\nEmail: {form_email}\nMessage: {form_message}\nRecaptcha Score: {r.json().get('score')}\n"
         )
         if r.json().get("success") and r.json().get("score")>0.5:
             try:
